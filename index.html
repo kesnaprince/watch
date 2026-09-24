@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WatchTower AI OS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07080c;--surface:#0e1016;--card:#12151c;--elev:#181c26;--border:#1e2430;--text:#eef0f6;--muted:#8b93a7;--faint:#5c6578;--accent:#6366f1;--cyan:#22d3ee;--green:#34d399;--red:#f87171;--amber:#fbbf24;--shadow:0 8px 24px -8px rgba(0,0,0,.5);--ease:cubic-bezier(.4,0,.2,1)}
+html{scrollbar-color:#2a3140 transparent}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#252b38;border-radius:20px;border:2px solid var(--bg);background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#323a4a;background-clip:padding-box}
+::selection{background:rgba(99,102,241,.35);color:#fff}
+.hidden{display:none!important}
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(99,102,241,.18),transparent)}
+.box{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px;box-shadow:var(--shadow);animation:riseIn .5s var(--ease)}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 14px -4px rgba(99,102,241,.6);flex-shrink:0}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.02em}
+input,select,textarea{width:100%;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;outline:none;font-family:inherit;margin-bottom:10px;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+input:hover,select:hover,textarea:hover{border-color:#2a3140}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+.btn{border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s var(--ease),transform .1s var(--ease),box-shadow .15s var(--ease)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn-p{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;width:100%;height:44px;box-shadow:0 6px 16px -6px rgba(99,102,241,.55)}
+.btn-s{padding:6px 12px;font-size:11px;width:auto;height:auto;box-shadow:none}
+.btn-g{background:var(--elev);color:var(--muted);border:1px solid var(--border)}
+.btn-g:hover{color:var(--text);border-color:#2a3140}
+.btn-ok{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.err{display:none;background:rgba(248,113,113,.12);color:#fca5a5;padding:10px;border-radius:8px;font-size:12px;margin-bottom:12px;border:1px solid rgba(248,113,113,.25)}
+@keyframes riseIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.shell{display:flex;min-height:100vh}
+.rail{width:68px;background:var(--surface);border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:40}
+.rail button{width:42px;height:42px;border:none;border-radius:12px;background:transparent;color:var(--faint);cursor:pointer;font-size:16px;transition:background .15s var(--ease),color .15s var(--ease),transform .1s var(--ease)}
+.rail button.active,.rail button:hover{background:var(--elev);color:var(--text)}
+.rail button.active{color:#c7d2fe;box-shadow:inset 0 0 0 1px rgba(99,102,241,.35)}
+.rail button:active{transform:scale(.94)}
+.rail button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+.side{width:220px;margin-left:68px;background:var(--surface);border-right:1px solid var(--border);position:fixed;height:100vh;overflow:auto;padding:16px 10px;z-index:30}
+.side h2{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:8px 10px;margin-top:10px}
+.side h2:first-child{margin-top:0}
+.nav{display:block;width:100%;text-align:left;border:none;background:transparent;color:var(--muted);padding:9px 12px;border-radius:10px;font-size:13px;cursor:pointer;transition:background .15s var(--ease),color .15s var(--ease);position:relative}
+.nav:hover{background:var(--elev);color:var(--text)}
+.nav.active{background:var(--elev);color:#c7d2fe;font-weight:600}
+.nav.active::before{content:"";position:absolute;left:-10px;top:20%;bottom:20%;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.main{margin-left:288px;flex:1;min-height:100vh}
+.top{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;background:rgba(7,8,12,.9);backdrop-filter:blur(12px);z-index:20}
+#title{letter-spacing:-.01em}
+.content{padding:22px 24px;max-width:1280px}
+.hero{padding:24px;border-radius:16px;border:1px solid rgba(99,102,241,.25);background:linear-gradient(125deg,#0f1220,#12182a 50%,#0e1620);margin-bottom:16px;box-shadow:var(--shadow)}
+.hero h1{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+.hero p{color:var(--muted);font-size:13px;max-width:580px}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1.15fr .85fr}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);transition:border-color .15s var(--ease)}
+.card h3{font-size:13px;font-weight:600;margin-bottom:10px;letter-spacing:-.005em}
+.metric{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.sub{font-size:11px;color:var(--muted);margin-top:4px}
+.live{font-size:11px;color:var(--green);font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+.view{display:none}.view.active{display:block;animation:fadeIn .25s var(--ease)}
+.agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.agent{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease)}
+.agent:hover{border-color:rgba(99,102,241,.5);transform:translateY(-2px);box-shadow:0 12px 28px -10px rgba(99,102,241,.35)}
+.agent:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.agent h4{font-size:14px;margin:8px 0 4px;letter-spacing:-.005em}
+.agent p{font-size:12px;color:var(--muted);line-height:1.5}
+.chat{background:var(--surface);border:1px solid var(--border);border-radius:12px;height:300px;overflow:auto;padding:14px;margin-bottom:10px;font-size:13px}
+.bubble{background:var(--elev);border-radius:10px;padding:10px 12px;margin-bottom:10px;max-width:92%;line-height:1.5;animation:fadeIn .2s var(--ease)}
+.bubble.me{background:rgba(99,102,241,.2);margin-left:auto}
+.bubble strong{color:#c7d2fe}
+.row{display:flex;gap:8px}
+.row input{flex:1;margin:0}
+.finding{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:center}
+.finding:last-child{border-bottom:none}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+.crit{background:rgba(248,113,113,.2);color:var(--red)}.high{background:rgba(251,191,36,.15);color:var(--amber)}.med{background:rgba(99,102,241,.15);color:#a5b4fc}
+.masked{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);border-radius:10px;padding:12px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;margin-top:10px;color:#a7f3d0;line-height:1.6}
+.ints{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.int{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow);transition:border-color .15s var(--ease)}
+.int:hover{border-color:#2a3140}
+.int h4{font-size:13px;margin-bottom:6px;letter-spacing:-.005em}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;color:var(--faint);padding:8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+td{padding:10px 8px;border-bottom:1px solid rgba(30,36,48,.7)}
+tbody tr{transition:background .12s var(--ease)}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr:last-child td{border-bottom:none}
+.pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+.ok{background:rgba(52,211,153,.12);color:var(--green)}.bad{background:rgba(248,113,113,.12);color:var(--red)}.pend{background:rgba(251,191,36,.12);color:var(--amber)}
+.empty{text-align:center;color:var(--muted);padding:32px 24px;font-size:13px}
+.chip{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(99,102,241,.15);color:#a5b4fc;letter-spacing:.02em}
+@media(max-width:1000px){.g4,.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.side{display:none}.main{margin-left:68px}}
+@media(max-width:640px){.g4,.g3{grid-template-columns:1fr}.content{padding:16px}.hero{padding:18px}.row{flex-direction:column}.row input{margin-bottom:8px}}
+</style>
+</head>
+<body>
+<div id="auth" class="auth">
+  <div class="box">
+    <div class="brand"><div class="mark">W</div><strong>WatchTower AI OS</strong></div>
+    <h2 id="authTitle" style="margin-bottom:6px">Sign in</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Agentic OS · Shadow Auditor · Supabase live data</p>
+    <div class="err" id="err"></div>
+    <form id="authForm">
+      <label>Email</label><input type="email" id="email" required>
+      <label>Password</label><input type="password" id="password" required minlength="6">
+      <button class="btn btn-p" id="authBtn">Sign in</button>
+    </form>
+    <p style="text-align:center;margin-top:14px;font-size:13px;color:var(--muted)">
+      <button type="button" id="toggleAuth" style="background:none;border:none;color:var(--cyan);cursor:pointer">Sign up instead</button>
+    </p>
+  </div>
+</div>
+
+<div id="app" class="shell hidden">
+  <nav class="rail">
+    <div class="mark" style="width:36px;height:36px;font-size:14px;margin-bottom:8px">W</div>
+    <button class="active" data-go="command-center">◈</button>
+    <button data-go="agents">◇</button>
+    <button data-go="auditor">🛡</button>
+    <button data-go="integrations">⬡</button>
+    <button data-go="approvals">✓</button>
+    <button data-go="hr">♙</button>
+    <div style="flex:1"></div>
+    <button id="out">↪</button>
+  </nav>
+  <aside class="side">
+    <h2>Command</h2>
+    <button class="nav active" data-go="command-center">Executive Command</button>
+    <button class="nav" data-go="knowledge">Knowledge</button>
+    <h2>AI Workforce</h2>
+    <button class="nav" data-go="agents">Marketplace</button>
+    <button class="nav" data-go="agent-hr">HR Agent</button>
+    <button class="nav" data-go="agent-sales">Sales Agent</button>
+    <button class="nav" data-go="agent-marketing">Marketing Agent</button>
+    <button class="nav" data-go="agent-finance">Finance Agent</button>
+    <button class="nav" data-go="agent-ops">Operations Agent</button>
+    <button class="nav" data-go="agent-it">IT Agent</button>
+    <button class="nav" data-go="agent-lead">Leadership Agent</button>
+    <h2>Security</h2>
+    <button class="nav" data-go="auditor">Shadow Auditor</button>
+    <button class="nav" data-go="audit-logs">Audit Logs</button>
+    <h2>Systems</h2>
+    <button class="nav" data-go="integrations">Integrations Hub</button>
+    <button class="nav" data-go="approvals">Approvals</button>
+    <button class="nav" data-go="issues">Issues</button>
+    <button class="nav" data-go="hr">HR Directory</button>
+    <button class="nav" data-go="finance" id="navFin">Finance</button>
+    <button class="nav" data-go="sales" id="navSales">Sales</button>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <div style="display:flex;gap:10px;align-items:center"><strong id="title">Executive Command</strong><span class="chip" id="roleChip">—</span></div>
+      <span class="live">● Live</span>
+    </header>
+    <div class="content">
+
+      <div class="view active" id="v-command-center">
+        <div class="hero">
+          <h1 id="welcome">Command Center</h1>
+          <p>AI agents monitor business context and recommend actions. Humans approve. Shadow Auditor guards outbound content to ChatGPT, Gemini, Claude, and other external models.</p>
+        </div>
+        <div class="grid g4" style="margin-bottom:12px">
+          <div class="card"><div class="sub">Agents online</div><div class="metric">7</div></div>
+          <div class="card"><div class="sub">Founder Score</div><div class="metric" id="fscore">71</div></div>
+          <div class="card"><div class="sub">Open issues</div><div class="metric" id="oiss">—</div></div>
+          <div class="card"><div class="sub">Pending approvals</div><div class="metric" id="pappr">—</div></div>
+        </div>
+        <div class="grid g2">
+          <div class="card"><h3>Agent recommendations (human-in-the-loop)</h3><div id="recs"></div></div>
+          <div class="card"><h3>Shadow Auditor</h3><p class="sub">PII, credentials, cards, salaries, confidential markers — block or mask before external AI. Full audit log retained.</p></div>
+        </div>
+      </div>
+
+      <div class="view" id="v-agents">
+        <div class="hero"><h1>AI Workforce</h1><p>Department agents as digital employees: monitor, reason, recommend, execute only after approval.</p></div>
+        <div class="agents" id="market"></div>
+      </div>
+
+      <div class="view" id="v-agent">
+        <div class="hero" id="agentHero"></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Conversation</h3>
+            <div class="chat" id="chat"></div>
+            <div class="row"><input id="ain" placeholder="Ask agent (scanned by Shadow Auditor first)…"><button class="btn btn-p btn-s" id="asend">Send</button></div>
+          </div>
+          <div class="card"><h3>Live context</h3><div id="arecs" class="sub">Agent pulls HR, deals, finance, or knowledge from Supabase.</div></div>
+        </div>
+      </div>
+
+      <div class="view" id="v-auditor">
+        <div class="hero" style="border-color:rgba(248,113,113,.35)">
+          <h1>🛡 Shadow Auditor</h1>
+          <p>Privacy and DLP guardian. Scan any text before it reaches external AI. Critical findings are blocked; high-risk content is masked; everything is logged.</p>
+        </div>
+        <div class="card">
+          <textarea id="scanIn" placeholder="Paste prompt, email, or document intended for ChatGPT / Gemini / Claude…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <select id="scanDest" style="width:auto;margin:0"><option>ChatGPT</option><option>Gemini</option><option>Claude</option><option>Other</option></select>
+            <button class="btn btn-p btn-s" id="scanBtn">Run Shadow Audit</button>
+          </div>
+          <div id="scanOut" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div class="view" id="v-audit-logs"><div class="card"><h3>Audit logs</h3><div id="alog"></div></div></div>
+
+      <div class="view" id="v-integrations">
+        <div class="hero"><h1>Integrations Hub</h1><p>Keka, Zoho, Salesforce, HubSpot, Google Workspace, Microsoft 365, Slack, Teams, Jira, QuickBooks, Stripe. Control plane UI; production OAuth lives in Edge Functions + Supabase Vault.</p></div>
+        <div class="ints" id="ints"></div>
+      </div>
+
+      <div class="view" id="v-knowledge"><div class="card"><h3>Company knowledge (AI memory)</h3><div id="know"></div></div></div>
+
+      <div class="view" id="v-approvals">
+        <div class="card" style="margin-bottom:12px"><h3>New request</h3>
+          <form id="af"><input id="at" placeholder="Title" required><input id="aa" type="number" placeholder="Amount"><select id="ac"><option>General</option><option>Travel</option><option>Software</option></select>
+          <button class="btn btn-p btn-s">Submit</button></form></div>
+        <div class="card"><div id="alist"></div></div>
+      </div>
+
+      <div class="view" id="v-issues">
+        <div class="card" style="margin-bottom:12px">
+          <form id="iff"><input id="it" placeholder="Title" required>
+            <select id="idept"><option>Engineering</option><option>Legal</option><option>Sales</option><option>HR</option><option>IT</option></select>
+            <select id="isev"><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option><option value="low">Low</option></select>
+            <textarea id="idesc" placeholder="Description"></textarea>
+            <button class="btn btn-p btn-s">Raise issue</button></form>
+        </div>
+        <div class="card"><div id="ilist"></div></div>
+      </div>
+
+      <div class="view" id="v-hr">
+        <div class="card" style="margin-bottom:12px" id="hrAdd">
+          <form id="ef"><input id="en" placeholder="Name" required><input id="et" placeholder="Title"><input id="ed" placeholder="Department">
+          <button class="btn btn-p btn-s">Add employee</button></form>
+        </div>
+        <div class="card"><div id="elist"></div></div>
+      </div>
+
+      <div class="view" id="v-finance">
+        <div class="grid g3" id="fsum" style="margin-bottom:12px"></div>
+        <div class="card" id="fadd" style="margin-bottom:12px">
+          <form id="tf"><input id="td" placeholder="Description" required><input id="tam" type="number" placeholder="Amount" required>
+            <select id="tty"><option value="income">Income</option><option value="expense">Expense</option></select>
+            <button class="btn btn-p btn-s">Add</button></form>
+        </div>
+        <div class="card"><div id="tlist"></div></div>
+      </div>
+
+      <div class="view" id="v-sales">
+        <div class="card" style="margin-bottom:12px" id="sadd">
+          <form id="df"><input id="dn" placeholder="Deal" required><input id="dv" type="number" placeholder="Value" required>
+            <select id="ds"><option value="prospecting">Prospecting</option><option value="negotiation">Negotiation</option><option value="closed_won">Won</option><option value="closed_lost">Lost</option></select>
+            <button class="btn btn-p btn-s">Add deal</button></form>
+        </div>
+        <div class="card"><div id="dlist"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://kjmvhrwxnkcsmbmymqvp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_NJuM7_9Se9sXZYZ3J0Gsnw_imtHI_IK";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let USER=null, PROFILE=null, CID=null, ROLE="employee", AGENT=null, mode="signin";
+const isCEO=()=>ROLE==="ceo", isMgr=()=>ROLE==="ceo"||ROLE==="manager";
+
+const AGENTS = {
+  hr:{k:"hr",n:"HR Agent",i:"♙",b:"Headcount, risk flags, hiring signals from directory data."},
+  sales:{k:"sales",n:"Sales Agent",i:"↗",b:"Pipeline stages, stalled deals, forecast pressure."},
+  marketing:{k:"marketing",n:"Marketing Agent",i:"△",b:"Campaign readiness, MQL quality, launch cadence."},
+  finance:{k:"finance",n:"Finance Agent",i:"$",b:"Burn, anomalies, approval thresholds."},
+  ops:{k:"ops",n:"Operations Agent",i:"⚙",b:"Cross-team blockers and process bottlenecks."},
+  it:{k:"it",n:"IT Agent",i:"⬡",b:"Security posture, access, incident signals."},
+  lead:{k:"lead",n:"Leadership Agent",i:"◎",b:"OKR synthesis and executive narrative."}
+};
+
+const RULES = [
+  {l:"Email",s:"medium",re:/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,m:()=>"[EMAIL]"},
+  {l:"SSN",s:"critical",re:/\b\d{3}-\d{2}-\d{4}\b/g,m:()=>"[SSN]"},
+  {l:"Card",s:"critical",re:/\b(?:\d{4}[-\s]?){3}\d{4}\b/g,m:()=>"[CARD]"},
+  {l:"API/secret",s:"critical",re:/\b(?:sk-|api[_-]?key|secret|Bearer\s+)[A-Za-z0-9_\-]{16,}\b/gi,m:()=>"[SECRET]"},
+  {l:"AWS key",s:"critical",re:/\bAKIA[0-9A-Z]{16}\b/g,m:()=>"[AWS]"},
+  {l:"Salary",s:"high",re:/\b(?:salary|compensation)\b/gi,m:()=>"[COMP]"},
+  {l:"Confidential",s:"high",re:/\b(?:CONFIDENTIAL|INTERNAL ONLY|DO NOT FORWARD)\b/gi,m:()=>"[CLASSIFIED]"},
+  {l:"Internal path",s:"high",re:/\b(?:\/home\/|\/Users\/|password\s*=)/gi,m:()=>"[PATH]"}
+];
+
+function scan(t){
+  const f=[]; let m=t;
+  for(const r of RULES){ const x=t.match(r.re); if(x){ f.push({l:r.l,s:r.s,c:x.length}); m=m.replace(r.re,r.m);} }
+  let a="allowed"; if(f.some(x=>x.s==="critical")) a="blocked"; else if(f.length) a="masked";
+  return {f,m,a};
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+function showErr(m){ const e=document.getElementById("err"); if(!m){e.style.display="none";return;} e.style.display="block"; e.textContent=m; }
+
+document.getElementById("toggleAuth").onclick=()=>{
+  mode=mode==="signin"?"signup":"signin";
+  document.getElementById("authTitle").textContent=mode==="signup"?"Sign up":"Sign in";
+  document.getElementById("authBtn").textContent=mode==="signup"?"Create account":"Sign in";
+  showErr(null);
+};
+document.getElementById("authForm").onsubmit=async e=>{
+  e.preventDefault(); showErr(null);
+  const email=document.getElementById("email").value.trim(), password=document.getElementById("password").value;
+  try{
+    if(mode==="signup"){ const {error}=await sb.auth.signUp({email,password}); if(error) throw error; showErr("Account created. Sign in, then link company via SQL."); }
+    else { const {error}=await sb.auth.signInWithPassword({email,password}); if(error) throw error; await boot(); }
+  }catch(x){ showErr(x.message); }
+};
+document.getElementById("out").onclick=async()=>{ await sb.auth.signOut(); document.getElementById("app").classList.add("hidden"); document.getElementById("auth").classList.remove("hidden"); };
+
+async function boot(){
+  const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+  USER=user;
+  const {data:p,error}=await sb.from("profiles").select("*,companies(*)").eq("id",user.id).single();
+  if(error||!p?.company_id){ showErr("Link profile to company: update profiles set company_id=..., role='ceo' where id=..."); return; }
+  PROFILE=p; CID=p.company_id; ROLE=p.role||"employee";
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("roleChip").textContent=ROLE.toUpperCase();
+  document.getElementById("welcome").textContent=`Welcome, ${ROLE==="ceo"?"CEO":ROLE}`;
+  document.getElementById("fscore").textContent=p.companies?.founder_score??71;
+  document.getElementById("navFin").style.display=isMgr()?"block":"none";
+  document.getElementById("navSales").style.display=isMgr()?"block":"none";
+  document.getElementById("hrAdd").style.display=isMgr()?"block":"none";
+  document.getElementById("fadd").style.display=isCEO()?"block":"none";
+  document.getElementById("sadd").style.display=isCEO()?"block":"none";
+  go("command-center");
+}
+
+function go(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active", n.dataset.go===name));
+  if(name.startsWith("agent-")){
+    openAgent(name.slice(6));
+    document.getElementById("v-agent").classList.add("active");
+    document.getElementById("title").textContent=AGENT?.n||"Agent";
+    return;
+  }
+  const el=document.getElementById("v-"+name); if(el) el.classList.add("active");
+  const titles={ "command-center":"Executive Command",agents:"AI Workforce",auditor:"Shadow Auditor","audit-logs":"Audit Logs",integrations:"Integrations",knowledge:"Knowledge",approvals:"Approvals",issues:"Issues",hr:"HR",finance:"Finance",sales:"Sales" };
+  document.getElementById("title").textContent=titles[name]||name;
+  if(name==="command-center") cmd();
+  if(name==="agents") market();
+  if(name==="integrations") ints();
+  if(name==="audit-logs") alogs();
+  if(name==="knowledge") know();
+  if(name==="approvals") approvals();
+  if(name==="issues") issues();
+  if(name==="hr") hr();
+  if(name==="finance") finance();
+  if(name==="sales") sales();
+}
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+
+async function cmd(){
+  document.getElementById("recs").innerHTML=[
+    ["Sales","Unstick Northwind — liability language idle 12 days"],
+    ["HR","Review medium-risk employee in Engineering"],
+    ["Finance","2 approvals over $1k need CEO decision"]
+  ].map(([a,t])=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><strong style="font-size:12px">${a}</strong><div class="sub">${t}</div>
+    <button class="btn btn-ok btn-s" style="margin-top:6px" onclick="this.parentElement.innerHTML='<span style=color:var(--green);font-size:12px>Approved — queued</span>'">Approve</button></div>`).join("");
+  try{ const {count}=await sb.from("issues").select("*",{count:"exact",head:true}).eq("company_id",CID).eq("status","open"); document.getElementById("oiss").textContent=count??"—"; }catch(_){}
+  try{ const {count}=await sb.from("approvals").select("*",{count:"exact",head:true}).eq("company_id",CID).eq("status","pending"); document.getElementById("pappr").textContent=count??"—"; }catch(_){}
+}
+
+function market(){
+  document.getElementById("market").innerHTML=Object.values(AGENTS).map(a=>`
+    <div class="agent" onclick="go('agent-${a.k}')"><div style="font-size:22px">${a.i}</div><h4>${a.n}</h4><p>${a.b}</p>
+    <div class="sub" style="color:var(--green);margin-top:8px">● Online</div></div>`).join("");
+}
+
+function openAgent(k){
+  AGENT=AGENTS[k]; if(!AGENT) return;
+  document.getElementById("agentHero").innerHTML=`<h1>${AGENT.i} ${AGENT.n}</h1><p>${AGENT.b}</p>`;
+  document.getElementById("chat").innerHTML=`<div class="bubble"><strong>${AGENT.n}</strong><br>Online. I use company tables + knowledge. Messages are scanned by Shadow Auditor before processing.</div>`;
+  document.getElementById("arecs").textContent="Ask for a briefing. Live rows load from Supabase for this domain.";
+}
+
+document.getElementById("asend").onclick=async()=>{
+  const inp=document.getElementById("ain"); const t=inp.value.trim(); if(!t||!AGENT) return;
+  const s=scan(t);
+  if(s.a==="blocked"){ alert("Shadow Auditor BLOCKED critical sensitive data. Message not sent."); await logA(s,t,"agent:"+AGENT.k); return; }
+  if(s.f.length) await logA(s,t,"agent:"+AGENT.k);
+  const chat=document.getElementById("chat");
+  chat.innerHTML+=`<div class="bubble me">${esc(t)}</div>`; inp.value="";
+  let ctx="";
+  try{
+    if(AGENT.k==="hr"){ const {data}=await sb.from("employees").select("name,title,risk").eq("company_id",CID).limit(6); ctx=(data||[]).map(e=>e.name+" risk="+e.risk).join("; "); }
+    else if(AGENT.k==="sales"){ const {data}=await sb.from("deals").select("name,value,stage").eq("company_id",CID).limit(6); ctx=(data||[]).map(d=>d.name+" "+d.stage).join("; "); }
+    else if(AGENT.k==="finance"){ const {data}=await sb.from("transactions").select("description,amount").eq("company_id",CID).limit(6); ctx=(data||[]).map(x=>x.description).join("; "); }
+    else { const {data}=await sb.from("knowledge_items").select("title").eq("company_id",CID).limit(5); ctx=(data||[]).map(k=>k.title).join(", "); }
+  }catch(_){ ctx="(run schema.sql + schema_v4_ai_os.sql)"; }
+  chat.innerHTML+=`<div class="bubble"><strong>${AGENT.n}</strong><br>Context: ${esc(ctx||"empty")}<br><br>Recommendation: prioritize open risks and HITL approvals. Production: Edge Function + RAG LLM; Shadow Auditor strips PII first.</div>`;
+  chat.scrollTop=chat.scrollHeight;
+};
+
+document.getElementById("scanBtn").onclick=async()=>{
+  const t=document.getElementById("scanIn").value, dest=document.getElementById("scanDest").value;
+  if(!t.trim()) return;
+  const s=scan(t); await logA(s,t,dest);
+  const o=document.getElementById("scanOut");
+  if(!s.f.length){ o.innerHTML=`<span class="pill ok">CLEAN</span> Safe for ${dest} under policy.`; return; }
+  o.innerHTML=s.f.map(f=>`<div class="finding"><span class="tag ${f.s==="critical"?"crit":f.s==="high"?"high":"med"}">${f.s}</span><div><strong>${f.l}</strong> ×${f.c}</div></div>`).join("")
+    +`<p style="margin-top:10px"><strong>Action: ${s.a.toUpperCase()}</strong></p>`
+    +(s.a!=="allowed"?`<div class="masked">${esc(s.m)}</div>`:"");
+};
+
+async function logA(s,orig,dest){
+  if(!CID||!USER) return;
+  try{ await sb.from("shadow_audit_logs").insert({ company_id:CID, user_id:USER.id, destination:dest, original_preview:orig.slice(0,200), findings:s.f, action_taken:s.a }); }catch(e){ console.warn(e); }
+}
+
+async function alogs(){
+  const el=document.getElementById("alog");
+  try{
+    const {data}=await sb.from("shadow_audit_logs").select("*").eq("company_id",CID).order("created_at",{ascending:false}).limit(40);
+    if(!data?.length){ el.innerHTML=`<div class="empty">No logs yet — run a scan</div>`; return; }
+    el.innerHTML=`<table><thead><tr><th>When</th><th>Dest</th><th>Action</th></tr></thead><tbody>${data.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${r.destination||""}</td><td><span class="pill ${r.action_taken==="blocked"?"bad":r.action_taken==="allowed"?"ok":"pend"}">${r.action_taken}</span></td></tr>`).join("")}</tbody></table>`;
+  }catch(_){ el.innerHTML=`<div class="empty">Run schema_v4_ai_os.sql</div>`; }
+}
+
+async function ints(){
+  const el=document.getElementById("ints"); let rows=[];
+  try{ const {data}=await sb.from("integrations").select("*").eq("company_id",CID); rows=data||[]; }catch(_){}
+  if(!rows.length) rows=["Keka HR","Zoho CRM","Zoho Marketing","Salesforce","HubSpot","Google Workspace","Microsoft 365","Slack","Teams","Jira","QuickBooks","Stripe"].map(n=>({display_name:n,status:"disconnected"}));
+  el.innerHTML=rows.map(r=>`<div class="int"><h4>${r.display_name}</h4><div class="sub">${r.status}</div>
+    <button class="btn btn-g btn-s" style="margin-top:8px" onclick="alert('Production: OAuth via Edge Function + secrets in Supabase Vault.')">${r.status==="connected"?"Disconnect":"Connect"}</button></div>`).join("");
+}
+
+async function know(){
+  const el=document.getElementById("know");
+  try{
+    const {data}=await sb.from("knowledge_items").select("*").eq("company_id",CID);
+    el.innerHTML=data?.length?data.map(k=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><strong>${k.title}</strong><div class="sub">${k.body||""}</div></div>`).join(""):`<div class="empty">Seed via schema_v4</div>`;
+  }catch(_){ el.innerHTML=`<div class="empty">schema_v4 required</div>`; }
+}
+
+async function approvals(){
+  const {data}=await sb.from("approvals").select("*").eq("company_id",CID).order("created_at",{ascending:false});
+  const rows=data||[];
+  document.getElementById("alist").innerHTML=rows.length?`<table><thead><tr><th>Title</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.title}</td><td>${r.amount||r.amount_value||""}</td><td>${r.status}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">None</div>`;
+}
+document.getElementById("af").onsubmit=async e=>{
+  e.preventDefault(); const amount=Number(document.getElementById("aa").value)||0;
+  await sb.from("approvals").insert({ company_id:CID, title:document.getElementById("at").value, amount:String(amount), amount_value:amount, category:document.getElementById("ac").value, requested_by:PROFILE?.full_name||USER.email, requested_by_id:USER.id, status:"pending" });
+  e.target.reset(); approvals();
+};
+
+async function issues(){
+  const {data}=await sb.from("issues").select("*").eq("company_id",CID).order("created_at",{ascending:false});
+  const rows=data||[];
+  document.getElementById("ilist").innerHTML=rows.length?`<table><thead><tr><th>Title</th><th>Dept</th><th>Sev</th><th>Status</th></tr></thead><tbody>${rows.map(i=>`<tr><td>${i.title}</td><td>${i.department||""}</td><td>${i.severity}</td><td>${i.status}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">None</div>`;
+}
+document.getElementById("iff").onsubmit=async e=>{
+  e.preventDefault();
+  await sb.from("issues").insert({ company_id:CID, title:document.getElementById("it").value, description:document.getElementById("idesc").value, department:document.getElementById("idept").value, severity:document.getElementById("isev").value, status:"open", raised_by:PROFILE?.full_name||USER.email, raised_by_id:USER.id });
+  e.target.reset(); issues();
+};
+
+async function hr(){
+  const {data}=await sb.from("employees").select("*").eq("company_id",CID);
+  const rows=data||[];
+  document.getElementById("elist").innerHTML=rows.length?`<table><thead><tr><th>Name</th><th>Title</th><th>Dept</th><th>Risk</th></tr></thead><tbody>${rows.map(e=>`<tr><td>${e.name}</td><td>${e.title||""}</td><td>${e.department||""}</td><td>${e.risk}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">None</div>`;
+}
+document.getElementById("ef").onsubmit=async e=>{
+  e.preventDefault();
+  await sb.from("employees").insert({ company_id:CID, name:document.getElementById("en").value, title:document.getElementById("et").value, department:document.getElementById("ed").value, status:"active", risk:"low" });
+  e.target.reset(); hr();
+};
+
+async function finance(){
+  const {data}=await sb.from("transactions").select("*").eq("company_id",CID);
+  const rows=data||[];
+  const inc=rows.filter(r=>r.type==="income").reduce((s,r)=>s+Number(r.amount),0);
+  const exp=rows.filter(r=>r.type==="expense").reduce((s,r)=>s+Math.abs(Number(r.amount)),0);
+  document.getElementById("fsum").innerHTML=`<div class="card"><div class="sub">Income</div><div class="metric" style="color:var(--green)">$${inc.toLocaleString()}</div></div>
+    <div class="card"><div class="sub">Expense</div><div class="metric" style="color:var(--red)">$${exp.toLocaleString()}</div></div>
+    <div class="card"><div class="sub">Net</div><div class="metric">$${(inc-exp).toLocaleString()}</div></div>`;
+  document.getElementById("tlist").innerHTML=rows.length?`<table><thead><tr><th>Desc</th><th>Type</th><th>Amt</th></tr></thead><tbody>${rows.map(t=>`<tr><td>${t.description}</td><td>${t.type}</td><td>${t.amount}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">None</div>`;
+}
+document.getElementById("tf").onsubmit=async e=>{
+  e.preventDefault(); let amount=Number(document.getElementById("tam").value); const type=document.getElementById("tty").value;
+  if(type==="expense") amount=-Math.abs(amount);
+  await sb.from("transactions").insert({ company_id:CID, description:document.getElementById("td").value, amount, type });
+  e.target.reset(); finance();
+};
+
+async function sales(){
+  const {data}=await sb.from("deals").select("*").eq("company_id",CID);
+  const rows=data||[];
+  document.getElementById("dlist").innerHTML=rows.length?`<table><thead><tr><th>Deal</th><th>Stage</th><th>Value</th></tr></thead><tbody>${rows.map(d=>`<tr><td>${d.name}</td><td>${d.stage}</td><td>${d.value}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">None</div>`;
+}
+document.getElementById("df").onsubmit=async e=>{
+  e.preventDefault();
+  await sb.from("deals").insert({ company_id:CID, name:document.getElementById("dn").value, value:Number(document.getElementById("dv").value), stage:document.getElementById("ds").value });
+  e.target.reset(); sales();
+};
+
+(async()=>{ const {data:{session}}=await sb.auth.getSession(); if(session) await boot(); })();
+</script>
+</body>
+</html>
