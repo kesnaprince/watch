@@ -111,3 +111,9 @@ begin
   ) as k(title, body, source, tags)
   where not exists (select 1 from knowledge_items where company_id = cid and title = k.title);
 end $$;
+
+UPDATE public.profiles
+SET
+    company_id = '54ab08fd-976d-4696-a829-746d842464e1',
+    role = 'ceo'
+WHERE id = '9e44209f-4545-4dfb-81d0-f120d02fd59f';
